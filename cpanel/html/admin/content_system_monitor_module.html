@@ -1,0 +1,92 @@
+<script type="text/javascript">
+	var dict={"running":"çalışıyor",
+		  "stopped":"çalışmıyor",
+		  "starting":"başlıyor...",
+		  "stopping":"duruyor...",
+		  "error":"hata"}
+
+	var handler={success:	function(status){
+					showstatus(status);
+					refreshstatus(5000);
+				},
+		     error: 	function(err){
+					refreshstatus(5000);
+				}
+	};
+
+	function refreshstatus(tout){
+		setTimeout('$.cimri_cpanel.comm.call("/system/status",null,handler)',tout)
+	}
+
+	$(document).ready(function(){
+		refreshstatus(0);
+	})
+
+	function showstatus(status){
+		content="";
+
+		//sys info
+		if(status==null){
+			content="sistem çalışmıyor";
+			$("#modctr").html(content);
+			$("#taskctr").css("display","none");
+		}else{	
+			//get the correct module status		
+			showmodstatus(status,"{{id}}")
+			for(var i=0;i<status.modules.length;i++){
+				mod=status.modules[i];
+				showmodstatus(mod,"{{id}}");
+			}
+		}
+	}
+
+	function showmodstatus(mod,id){
+		//check module id
+		if(mod.id!=id)
+			return "";
+
+		//set title
+		$("#title").html("Sistem Durumu . "+mod.module);		
+
+		//render module status
+		content='';
+		content=content+mod.module;
+		content=content+"   "+mod.host+":"+mod.port;
+		content=content+"   "+dict[mod.status];
+
+		$("#modctr").html(content);
+
+		//get progress
+		if(mod.tasks.length>0){
+			var tasks="";
+			for(var i=0;i<mod.tasks.length;i++){
+				tasks=tasks+mod.tasks[i].threadtags;
+				tasks=tasks+"   "+status;
+				tasks=tasks+"   "+mod.tasks[i].progress+"%\n";
+			}
+
+			$("#taskctr").css("display","block");	
+			$("#tasks").html(tasks);	
+		}else{
+			$("#taskctr").css("display","none");	
+		}
+	}
+</script>
+
+<p>
+	<h3 id="title">Sistem Durumu</h3>
+</p>
+	
+<div>
+	<h4>Modül Durumu</h4>
+	<pre id="modctr">
+modül durumu yükleniyor...
+	</pre>
+</div>
+
+<div id="taskctr">
+	<h4>İşlemler</h4>
+	<pre id="tasks">
+	</pre>
+</div>
+

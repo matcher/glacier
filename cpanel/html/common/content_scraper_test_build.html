@@ -1,0 +1,99 @@
+<script type="text/javascript">
+	var index=-1;
+	var data={{data|safe}};
+	var spec=['merchantItemTitle','pricePlusTax','priceEft','modelNameView','mpnValue','brand','shipping','inStock'];
+
+	function record(){
+		//get args
+		var args={};
+		args['index']=index;
+		for(var i=0;i<spec.length;i++)
+			args[spec[i]]=$("#"+spec[i]).val();		
+
+		//update local copy
+		data[index]["meta.refitem"]=args;
+
+		//handler
+		var handler={success:	function(status){
+						next();
+					},
+		    	     error: 	function(err){
+					}
+		};
+
+		$.cimri_cpanel.comm.call("/scraper/test/{{id}}/update",args,handler);
+	}
+
+
+	function prev(){
+		if(index==0)
+			return;
+		index=index-1;
+
+		show();
+	}	
+
+	function next(){
+		index=index+1;
+		if(index==data.length){
+			window.location="/system/tests";
+			return;
+		}
+
+		show();
+	}
+
+	function show(){
+		//display parameters
+		var args=data[index]["meta.refitem"];
+		if(args)
+			for(var field in args)
+				$("#"+field).val(args[field]);
+		else
+			for(var i=0;i<spec.length;i++)
+				$("#"+spec[i]).val("");		
+
+		//open url
+		$("#site").html('<iframe src="'+data[index]["data"]+'" border="0" width="900" height="800"/>');
+	}
+
+	$(document).ready(function(){
+		next();
+	});
+	
+</script>
+
+
+<p>
+	<h3>Scraper Testi</h3>
+</p>
+
+<p>
+	<h3>{{data.label}}</h3>
+</p>
+
+<div style="float:left; width:200px">
+	<h4>Ürün Bilgileri</h4>
+	merchantItemTitle:<br/>
+	<input id="merchantItemTitle" type="text" name=""/><br/>
+	mpnValue:<br/>
+	<input id="mpnValue" type="text" name=""/><br/>
+	brand:<br/>
+	<input id="brand" type="text" name=""/><br/>
+	modelNameView:<br/>
+	<input id="modelNameView" type="text" name=""/><br/>
+	pricePlusTax:<br/>
+	<input id="pricePlusTax" type="text" name=""/><br/>
+	priceEft:<br/>
+	<input id="priceEft" type="text" name=""/><br/>
+	shipping:<br/>
+	<input id="shipping" type="text" name=""/><br/>
+	inStock:<br/>
+	<input id="inStock" type="text" name=""/><br/>
+	<a href="javascript:;" onclick="prev()">geri</a> | 
+	<a href="javascript:;" onclick="next()">geç</a> | 
+	<a href="javascript:;" onclick="record()">kayıt et</a>
+</div>
+
+<div style="float:left; width:900px height:700px;" id="site">
+</div>

@@ -1,0 +1,116 @@
+<script type="text/javascript">
+	var dict={"running":"çalışıyor",
+		  "stopped":"çalışmıyor",
+		  "starting":"başlıyor...",
+		  "stopping":"duruyor...",
+		  "error":"hata"}
+
+	var handler={success:	function(status){
+					showstatus(status);
+					refreshstatus(5000);
+				},
+		     error: 	function(err){
+					refreshstatus(5000);
+				}
+	};
+
+	function refreshstatus(tout){
+		setTimeout('$.cimri_cpanel.comm.call("/system/status",null,handler)',tout)
+	}
+
+	$(document).ready(function(){
+		refreshstatus(0);
+	})
+
+	function showstatus(status){
+		content="";
+
+		//sys info
+		if(status==null){
+			content="sistem çalışmıyor";
+			$("#modctr").css("display","none");
+		}else{			
+			content=content+status.host+" (master)";
+			content=content+"   "+dict[status.status];
+			content=content+"   cpu: "+status.cpu.join("% ")+"%";
+			content=content+"   mem: "+(100-status.mem)+"%";
+			/*
+			if(status.status=="running")
+				content=content+'   <a href="javascript:;" onclick="">[durdur]</a>';
+			else if(status.status=="stopped")
+				content=content+'   <a href="javascript:;" onclick="">[çalıştır]</a>';
+			*/
+			content=content+'   <a href="javascript:;" onclick="$.cimri_cpanel.showcontent(\'content\',\'/system/cache\')">[cache]</a>';
+		}
+		$("#sys").html(content);
+
+		//module info
+		if(status!=null){
+			content="<table>";
+			
+			//controller
+			content=content+getmodstatus(status);
+
+			//modules		
+			for(var i=0;i<status.modules.length;i++){
+				mod=status.modules[i];
+				content=content+getmodstatus(mod);
+			}
+
+			content=content+"</table>";
+
+			$("#modctr").css("display","block");
+			$("#modules").html(content);
+		}
+	}
+
+	function getmodstatus(mod){
+		//get progress
+		var progress=0;
+		if(mod.tasks.length>0){
+			for(var i=0;i<mod.tasks.length;i++)
+				progress=progress+mod.tasks[i].progress;
+			progress=Math.round(progress/mod.tasks.length);
+		}
+	
+		//render module status
+		content='<tr>';
+		content=content+"<td>"+mod.module+"</td>";
+		content=content+"<td> "+mod.host+":"+mod.port+"</td>";
+		content=content+"<td> "+dict[mod.status]+"</td>";
+		if(mod.tasks.length==0){
+			content=content+"<td></td>";
+		}else{
+			var len=Math.min(100,progress)*300.0/100;
+			var r=Number(Math.floor(255-Math.min(100,progress)*255.0/100)).toString(16);
+			if(r.length==1)
+				r="0"+r;
+			var bar='<div style="float:left;height:10px; width:'+len+'px; background-color:#'+r+'ff00;"></div>';
+			var pad='<div style="float:left;height:10px; width:'+(300-len+10)+'px;"></div>';
+			content=content+'<td><div style="float:left">';
+			content=content+bar+pad;
+			content=content+progress+'% <a href="/system/monitor/'+mod.id+'/">[takip et]</a>';
+			content=content+'</div><div style="float:none; clear:both"></div></td>';
+		}
+		content=content+"</tr>";
+		
+		return content;
+	}
+</script>
+
+<p>
+	<h3>Sistem Durumu</h3>
+</p>
+	
+<div>
+	<h4>Sistem</h4>
+	<pre id="sys">
+sistem durumu yükleniyor...
+	</pre>
+</div>
+
+<div id="modctr" style="display:none;">
+	<h4>Modüller</h4>
+	<pre id="modules">
+	</pre>
+</div>

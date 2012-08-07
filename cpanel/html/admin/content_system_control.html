@@ -1,0 +1,142 @@
+<script type="text/javascript">
+	var handler={success:	function(status){
+					showstatus(status);
+					refreshstatus(5000);
+				},
+		     error: 	function(err){
+					refreshstatus(5000);
+				}
+	};
+
+	function refreshstatus(tout){
+		setTimeout('$.cimri_cpanel.comm.call("/system/threads",null,handler)',tout)
+	}
+
+	$(document).ready(function(){
+		refreshstatus(0);
+	})
+
+	function showstatus(status){
+		content="";
+
+		//sys info
+		if(status==null){
+			content="sistem çalışmıyor";
+		}else{			
+			content=content+"<table>";
+			for(var i=0;i<status.length;i++){
+				content=content+"<tr>";
+				var thread=status[i];
+				content=content+"<td>"+thread.id+"</td>";
+				content=content+"<td>"+thread.threadtags+"</td>";
+				var link="/system/reports/"+thread.threadid+"/";
+				if(thread.status=="complete")
+					content=content+'<td>tamamlandı</td><td><a href="'+link+'">[raporla]</a></td>';
+				else if(thread.status=="error")
+					content=content+'<td><span style="color:#DD0000">hata</span></td><td><a href="'+link+'">[raporla]</a></td>';
+				else if(thread.status=="started")			
+					content=content+'<td>işlemde ('+thread.progress+'%)</td><td><a href="'+link+'">[işlem raporu]</a></td>';
+				content=content+"</tr>";
+			}
+			content=content+"</table>";
+		}
+		$("#sys").html(content);
+
+	}
+
+
+	function editSchedule(id){
+		//show edit form
+		$("#schedule-show-ctr-"+id).hide();
+		$("#schedule-edit-ctr-"+id).show();
+	}
+
+	function setSchedule(id){
+		//show progress indicator
+		$("#schedule-edit-ctr-"+id).hide();
+		$("#schedule-progress-ctr-"+id).show();
+
+		//update
+		var schedule=$("#schedule-edit-"+id).val();
+
+		var handler={success:	function(status){
+						//show updated schedule
+						$("#schedule-progress-ctr-"+id).hide();
+						$("#schedule-"+id).html(schedule);
+						$("#schedule-show-ctr-"+id).show();
+					},
+			     error: 	function(err){
+						//show updated schedule
+						$("#schedule-progress-ctr-"+id).hide();
+						$("#schedule-"+id).html("hata");
+						$("#schedule-show-ctr-"+id).show();
+					}
+		};
+
+		$.cimri_cpanel.comm.call("/template/"+id+"/schedule/",{"a":"update","schedule":schedule},handler);
+	}
+
+
+	function deleteTemplate(id){
+		//show progress indicator
+		$("#schedule-edit-ctr-"+id).hide();
+		$("#schedule-progress-ctr-"+id).show();
+
+		var handler={success:	function(status){
+						$("#template-"+id).remove();					
+					},
+			     error: 	function(err){
+						//show updated schedule
+						$("#schedule-progress-ctr-"+id).hide();
+						$("#schedule-"+id).html("hata");
+						$("#schedule-show-ctr-"+id).show();
+					}
+		};
+
+		$.cimri_cpanel.comm.call("/template/"+id,{"a":"delete"},handler);
+	}
+</script>
+
+<p>
+	<h3>İşlem Yönetimi</h3>
+	<a href="javascript:;" onclick="$.cimri_cpanel.showcontent('content','/task/new/')">işlem yarat</a>	
+</p>
+
+<p>
+	<h4>İşlemler</h4>
+</p>
+<p id="sys">
+işlemler yükleniyor...
+</p>
+
+<p>
+	<h4>İşlem Takvimi</h4>
+</p>
+
+<p>
+	<h4>İşlem Şablonları</h4>
+</p>
+
+<table>
+{% for template in templates %}
+<tr id="template-{{template.id}}">
+	<td style="width:150px;">{{template.label}}</td>
+	<td>
+		<a href="javascript:;" onclick="$.cimri_cpanel.showcontent('content','/template/{{template.id}}/newtask')">işlem yarat</a> | 
+	    	<a href="javascript:;" onclick="deleteTemplate('{{template.id}}');">sil</a> |
+		işlem takvimi:
+		<span id="schedule-show-ctr-{{template.id}}">
+			<span id="schedule-{{template.id}}">{{template.schedule}}</span>
+			<a href="javascript:;" onclick="editSchedule('{{template.id}}')">değiştir</a> 
+		</span>
+		<span id="schedule-edit-ctr-{{template.id}}" style="display:none;">
+			<input id="schedule-edit-{{template.id}}" type="text" style="width:300px;" value="{{template.schedule}}"/>
+			<a href="javascript:;" onclick="setSchedule('{{template.id}}')">güncelle</a> 
+		</span>
+		<span id="schedule-progress-ctr-{{template.id}}" style="display:none;">
+			<img src="/res/img/loader.gif" />
+		</span>
+	</td>
+</tr>
+{% endfor %}
+</table>

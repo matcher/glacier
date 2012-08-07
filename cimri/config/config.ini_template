@@ -1,0 +1,50 @@
+# --- PRODUCTION -----------------------------------------------------------------------------------------------
+
+[WEB]
+url_open_timeout=		600
+
+[API]
+#cimri_service_url=		http://10.25.0.154:8180/cimri-service/
+cimri_service_url=		http://10.25.0.56:8480/cimri-service/
+cimri_solr_url=			http://iceberg.cimri.com:8080/cimri-matcher-solr
+cimri_solr_mi_url=		http://iceberg.cimri.com:8080/cimri-matcher-solr-mi
+cimri_solr_mi_bl_url=           http://iceberg.cimri.com:8080/cimri-matcher-solr-mi-bl 
+
+cimri_merchant_xml_schema=	cimri/res/onlinemerchant.xsd
+cimri_merchant_xml_namespace=	http://www.cimri.com/schema/merchant/upload
+#cimri_merchant_xml_url=	http://10.25.0.154:8180/cimri-service/xmlproxy/
+cimri_merchant_xml_url=		http://10.25.0.56:8480/cimri-service/xmlproxy/
+
+analytics_db=			cimri-matcher-dev
+
+[SPECS]
+product_spec=			cimri/config/spec.ini
+
+[SYS]
+cache_path=			/var/cache/cimri-dev
+task_store_path=		/var/log/cimri-dev/tasks
+ml_store_path=			/var/log/cimri-dev/ml
+
+[MOD_AUTOMATION]
+base_port=			10101
+crawlers=			cimri.module.crawler.productxml.ProductXMLCrawler(1)
+scrapers=			cimri.module.scrapper.dom.DOMScrapper, cimri.module.scrapper.xmlscraper.XMLScrapper
+matchers=			cimri.module.matcher.legacy.LegacyMatcher,cimri.module.matcher.meta.MetaMatcher(1)
+updaters=			cimri.module.update.sandbox.SandboxUpdater, cimri.module.update.cimriservice.CimriServiceUpdater
+
+[MOD_PRODUCT_CRAWLER]
+
+
+[MOD_CATEGORY_CRAWLER]
+
+
+[MOD_PRODUCT_MATCHER]
+
+
+[MOD_PRODUCT_SCRAPPER]
+
+
+[MOD_PRODUCT_FINDER]
+
+
+

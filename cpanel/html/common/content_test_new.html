@@ -1,0 +1,98 @@
+<script type="text/javascript">
+	var itemshelp="(merchantId,merchantItemId),...";
+
+	function showmanual(){
+		$("[_test=manual]").show();
+		$("[_test=auto]").hide();
+		$("#auto").val(0);
+	}
+
+	function showauto(){
+		$("[_test=manual]").hide();
+		$("[_test=auto]").show();
+		$("#auto").val(1);
+	}
+
+	function itemsreset(){
+		$("#items").val(itemshelp);
+	}
+
+	function itemsfocus(){
+		if($("#items").val()==itemshelp)
+			$("#items").val("");
+	}
+	
+	function itemsblur(){
+		if($("#items").val()=="")
+			itemsreset();
+	}
+
+	$(document).ready(function(){
+		itemsreset();
+	});
+</script>
+
+<p>
+	<h3>Sistem Testleri</h3>
+</p>
+
+<p>
+	<h4>Yeni Test</h4>
+</p>
+
+<div id="msg" style="height:20px;">
+{% if error %}
+        <span class="error">! {{ error }}</span>
+{% endif %}
+</div>
+
+<input type="hidden" id="action" value="update" />
+
+<table>
+<input type="hidden" id="auto" value="1" />
+<tr style="width:150px;">
+	<td>isim:</td>
+	<td><input type="text" id="label" value="{{target.label}}"/></td>
+</tr>
+<tr>
+        <td>modül:</td>
+	<td> <select id="module">
+                <option value="cimri.module.scrapper.dom.DOMScrapper">DOMScrapper</option>
+                <option value="cimri.module.matcher.meta.MetaMatcher">MetaMatcher</option>
+                <option value="cimri.module.matcher.legacy.LegacyMatcher">LegacyMatcher</option>
+             </select>
+	</td>
+</tr>
+<tr _test="auto">
+        <td>merchant:</td>
+	<td> <select id="merchant" style="width:200px">
+		<option value="*" selected="selected">*</option>
+        {% for merchant in merchants %}
+                <option value="{{merchant.id}}">{{merchant.name}}</option>
+        {% endfor %}
+             </select>
+	</td>
+</tr>
+<tr _test="auto">
+	<td align="right" colspan="2">
+	        <a href="javascript:;" onclick="showmanual()">(test edilecek itemları gir)</a>
+	</td>
+</tr>
+<tr _test="manual" style="display:none;">
+        <td>test itemları:</td>
+	<td> 
+		<textarea id="items" onfocus="itemsfocus()" onblur="itemsblur()"></textarea>
+	</td>
+</tr>
+<tr _test="manual" style="display:none;">
+	<td align="right" colspan="2">
+	        <a href="javascript:;" onclick="showauto()">(test edilecek itemları otomatik seç)</a>
+	</td>
+</tr>
+<tr>
+	<td align="right" colspan="2">
+	        <a href="javascript:;" onclick="$.cimri_cpanel.submitcontent('content','/test/new/')">kayıt et</a>
+	</td>
+</tr>
+</table>
+

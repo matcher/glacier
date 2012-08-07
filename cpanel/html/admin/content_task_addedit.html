@@ -1,0 +1,384 @@
+<script type="text/javascript">
+	var metadict={"cache.read":"cache bölümünden oku",
+		      "cache.write":"cache bölümünü güncelle",
+		      "untrained":"eğitimsiz",
+		      "benchmark":"benchmark",
+		      "workers":"işlemciler",
+		      "merchants.id":"merchant",
+		      "merchants.id.alt":"merchant ID (alternatif)",
+		      "merchants.index":"ilk merchant endeksi",	
+		      "merchants.range":"merchant sayısı",
+		      "merchants.items.index":"ilk merchant item endeksi",
+		      "merchants.items.range":"merchant item sayısı",
+		      "merchants.all":"bütün merchantlar"};
+
+	var descriptors={{descriptors|safe}}	
+	var merchants={{merchants|safe}}
+	merchants.sort(function(a,b){return Number(a['id'])-Number(b['id']);});
+
+{% if tasks %}
+	var tasks={{tasks|safe}};
+{% else %}
+	var tasks=[];
+{% endif %}
+
+	function modname(module){
+		tokens=module.split(".");
+		return tokens[tokens.length-1];
+	}
+
+	function getmodule(name){
+		for(var i=0;i<descriptors.length;i++){
+			var descriptor=descriptors[i];		
+			if(descriptor["module"]==name)
+				return descriptor;
+		}	
+		return null;
+	}
+
+	function showtasks(){
+		var list=[];
+		for(var i=0;i<tasks.length;i++){
+			var task=tasks[i];
+			var html="";
+			html+='<tr><td style="width:200px;">';
+			html+=modname(task.target);
+			html+='</td><td style="width:150px;">';
+			html+=task.op;
+			html+='</td><td style="width:150px;">';
+			html+='<a href="javascript:" onclick="edittask('+i+')">[düzenle]</a>';
+			html+='<a href="javascript:" onclick="removetask('+i+')">[sil]</a>';
+			html+='</td></tr>';
+			list.push(html);
+		}
+		$("#tasks").html(list.join(""));
+	}
+
+	function edittask(index){
+		//get task
+		var task=tasks[index];
+
+		//render
+		var html="";
+		html+='<tr><td style="width:200px;">modül:</td>';
+		html+='<td>'+modname(task["target"])+'</td></tr>';
+		html+='<tr id="taskctrls"><td></td><td align="right">';
+		html+='<a href="javascript:;" onclick="updatetask('+index+')">[güncelle]</a>';
+		html+='<a href="javascript:;" onclick="hidenew()">[iptal]</a></td></tr>';
+
+		$("#task").html(html);
+
+		//show task details
+		show_options(index);
+	}	
+
+	function newtask(){
+		var list=[];
+
+		//find tasks based on the current task list
+		var prevmod=null;
+		if(tasks.length>0){
+			prevtask=tasks[tasks.length-1];
+			prevmod=getmodule(prevtask["target"]);
+		}
+		for(var i=0;i<descriptors.length;i++){
+			var task=descriptors[i];
+			if(task["data"]==null && prevmod==null)
+				list.push(task);
+			else if(task["data"]!=null && prevmod!=null){
+				var pass=true;
+				for(var key in task["data"])
+					if(key in prevmod["result"]==false || task["data"][key]!=prevmod["result"][key])
+						pass=false;
+				if(pass)
+					list.push(task);
+			} 
+		}				
+	
+		//render
+		var html="";
+		html+='<tr><td style="width:200px;">modül:</td>';
+		html+='<td><select id="module" onchange="show_options(null)">';
+		for(var i=0;i<list.length;i++){
+			var module=list[i];
+			var name=modname(module["module"]);
+			html+='<option value="'+module["module"]+'">'+name+'</option>'; 
+		}
+		html+='</select></td></tr>';
+		html+='<tr id="taskctrls"><td></td><td align="right">';
+		html+='<a href="javascript:;" onclick="addnew()">[ekle]</a>';
+		html+='<a href="javascript:;" onclick="hidenew()">[iptal]</a></td></tr>';
+
+		$("#task").html(html);
+
+		//show task details
+		if(list.length>0)
+			show_options(null);
+	}
+
+	function hidenew(){
+		$("#task").html("");
+	}
+
+	function show_options(index){
+		//get task(if editing)
+		var task=null;
+		var module=null;
+		if(index!=null){
+			task=tasks[index];
+
+			//get module
+			module=getmodule(task["target"]);
+		}else{
+			//get module
+			module=getmodule($("#module").val());
+		}
+	
+		//get options
+		var list=[];
+
+		//operation
+		var html="";
+		html=html+'<tr name="taskoption"><td>iş</td>';
+		html=html+'<td><select id="op">';
+		for(var i=0;i<module["ops"].length;i++){
+			var selected='';
+			if(task!=null && task["op"]==module["ops"][i])
+				selected='selected="selected"';
+			html+='<option value="'+module["ops"][i]+'" '+selected+'>'+module["ops"][i]+'</option>';
+		}
+		html=html+"</select></td></tr>";
+		list.push(html);
+
+		//meta options
+		for(var i=0;i<module["meta"].length;i++){
+			var key=module["meta"][i]["key"];
+			var type=module["meta"][i]["type"];
+			var defval=module["meta"][i]["default"];
+			var label=key;
+			if(key in metadict)
+				label=metadict[key];
+			var html="";
+			html+='<tr name="taskoption"><td>'+label+'</td>';
+			html+="<td>";
+			if(type=="bool"){
+				if(task!=null)
+					defval=task["meta"][key];
+				var checked="";
+				if(defval==true)
+					checked='checked="checked"';
+				html+='<input type="checkbox" id="meta.'+key+'" '+checked+' />';
+			}else if(type=="int"){
+				if(task!=null)
+					defval=task["meta"][key];
+				if(defval==null)
+					defval="";
+				html+='<input style="width:72px" type="text" id="meta.'+key+'" value="'+defval+'" />';
+			}else if(type=="str"){
+				if(task!=null)
+					defval=task["meta"][key];
+				html+='<input style="width:150px" type="text" id="meta.'+key+'" value="'+defval+'" />';
+			}else if(type=="cimri.module.type.MerchantID" && merchants!=null){
+				html+='<select id="meta.'+key+'" style="width:150px">';
+				var selected='';		
+				if(task!=null && task["meta"][key]=="*")
+					selected='selected="selected"';
+				html+='<option value="" '+selected+'>*</option>';
+				for(var j=0;j<merchants.length;j++){
+				var selected='';		
+					if(task!=null && task["meta"][key]==merchants[j]["id"])
+						selected='selected="selected"';
+                			html+='<option value="'+merchants[j]["id"]+'" '+selected+'>'+merchants[j]["id"]+' - '+merchants[j]["name"]+'</option>';
+				}
+				html+='</select>';
+			}
+
+			html+="</td></tr>";
+			list.push(html);		
+		}
+		//hide the current details		
+		$("[name=taskoption]").remove();
+
+		//show the new details
+		$(list.join("")).insertBefore($("#taskctrls"));
+	}
+
+	function removetask(index){
+		//hide the current details		
+		hidenew();
+
+		//remove task and all subsequent tasks
+		tasks.splice(index,100);
+
+		//refresh
+		showtasks();
+	}
+
+	function updatetask(index){
+		recordtask(index);
+	}
+
+	function addnew(){
+		recordtask(null);
+	}
+
+	function recordtask(index){
+		//get module
+		var module=null;
+		var task=null;
+		if(index!=null){
+			task=tasks[index];
+
+			//get module
+			module=task["target"];
+		}else{
+			//get module
+			module=$("#module").val();
+		}
+
+		//get descriptor
+		var descriptor=getmodule(module);
+
+		//get parameters
+		var op=$("#op").val();
+	
+		//get meta
+		var meta={};
+		$('[id^="meta."]').each(function(index,elmt){
+			var key=$(elmt).attr("id").substr(5);
+			var val=$(elmt).val();
+			var type=$(elmt).attr("type");
+			if(type=="checkbox"){
+				if($(elmt).attr("checked"))
+					val=true;
+				else
+					val=false;
+			}else{
+				//find meta type
+				for(var index in descriptor["meta"]){
+					if(descriptor["meta"]["key"]==key && descriptor["meta"]["type"]=="int")
+						val=Number(val);
+				}
+			}
+			meta[key]=val;
+		});
+		
+		//add to list
+		if(task==null)
+			tasks.push({"target":module, "op":op, "meta":meta});
+		else{
+			tasks[index]["op"]=op;
+			tasks[index]["meta"]=meta;
+		}
+
+		//refresh
+		showtasks();		
+		hidenew();
+	}
+
+	function create(){
+		//create
+		var args={"label":$("#label").val(),
+		          "tasks":JSON.stringify(tasks)};
+
+		//progress indicator
+		progress("işlem yaratılıyor... ");
+
+		var handler={"success":function(){
+					$.cimri_cpanel.showcontent("content","/task/created");
+			     },
+			     "error":  function(){
+					;
+			     }
+		};
+		$.cimri_cpanel.comm.call("/task/schedule",args,handler);
+	}
+
+	function create_template(){
+		//create
+		var args={"label":$("#label").val(),
+		          "tasks":JSON.stringify(tasks)};
+
+		//progress indicator
+		progress("şablon yaratılıyor... ");
+
+		var handler={"success":function(){
+					$.cimri_cpanel.showcontent("content","/template/created");
+			     },
+			     "error":  function(){
+					;
+			     }
+		};
+		$.cimri_cpanel.comm.call("/template/create",args,handler);
+	}
+
+	function update_template(){
+		//update
+		var args={"label":$("#label").val(),
+		          "tasks":JSON.stringify(tasks),
+			  "a":"update"};
+
+		//progress indicator
+		progress("şablon güncelleniyor... ");
+
+		var handler={"success":function(){
+					$.cimri_cpanel.showcontent("content","/template/updated");
+			     },
+			     "error":  function(){
+					;
+			     }
+		};
+		$.cimri_cpanel.comm.call("/template/{{template.id}}",args,handler);
+	}
+
+	function progress(msg){
+		var html='<p><h3>Yeni İşlem</h3></p>';
+		html=html+'<p id="msg">'+msg+' <img src="/res/img/loader.gif" /></p>';
+		$("#content").html(html);
+	}
+
+	$(document).ready(function(){
+		showtasks();		
+	});
+</script>
+
+<p>
+	<h3>Yeni İşlem</h3>
+</p>
+
+<div id="msg" style="height:20px;">
+{% if error %}
+        <span class="error">! {{ error }}</span>
+{% endif %}
+</div>
+
+<input type="hidden" id="action" value="update" />
+
+<h4>İşlem Bilgileri</h4>
+<table>
+<tr>
+        <td style="width:150px">etiket:</td>
+        <td><input type="text" id="label" value="{% if template %} {{template.label}} {% endif %}"/></td>
+</tr>
+</table>
+
+<h4>İşler</h4>
+<table id="tasks">
+</table>
+<span id="addtask"><a href="javascript:;" onclick="newtask()">[iş ekle]</a></span>
+
+<table id="task">
+</table>
+
+<br/>
+<a href="javascript:;" onclick="create()">[işlemi yarat]</a> |
+{% if template.id %}
+<a href="javascript:;" onclick="update_template()">[şablonu güncelle]</a>
+{% else %}
+<a href="javascript:;" onclick="create_template()">[şablon olarak kaydet]</a>
+{% endif %}
+
+
+
+
+

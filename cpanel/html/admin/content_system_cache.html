@@ -1,0 +1,17 @@
+<p>
+	<h3>Sistem Durumu . Cache</h3>
+</p>
+
+<p>
+	<h4>Cache Alanları</h4>
+</p>
+
+<table>
+{% for section in status %}
+<tr>
+	<td style="width:120px;">{{section.label}}</td>
+	<td style="width:120px;">{{section.count}} dosya</td>
+	<td><a href="javascript:;" javascript=";">[sil]</a></td>
+</tr>
+{% endfor %}
+</table>

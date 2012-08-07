@@ -1,0 +1,12 @@
+<p>
+	<h3>Sistem Testleri</h3>
+</p>
+
+<p>
+<a href="javascript:;" onclick="$.cimri_cpanel.showcontent('content','/test/new')">yeni test yarat</a>
+<pre>
+{% for test in data %}
+{{test.created}} {{test.op}} {{test.getstatusstring}} {{test.target.merchant.name}} {{test.label}} {% if test.status == "ready" %}<a href="/{% if test.op == "match" %}matcher{% else %}scraper{% endif %}/test/{{test.id}}/build">[hazırla]</a> | <a href="javascript:;" onclick="$.cimri_cpanel.showcontent('content','/test/{{test.id}}/schedule')">[test et]</a>{% endif %}
+{% endfor %}
+</pre>
+</p>

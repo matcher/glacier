@@ -1,0 +1,88 @@
+<p>
+	<h3>İşlem Sonuçları</h3>
+</p>
+
+{% for task in report %}
+{% for result in task.result %}
+
+
+{# - Crawler Output --------------------------------------------------------------------------------------#}
+{% if task.op == "crawl" or task.op == "sample" %}
+<p>
+<table>
+
+<tr>
+	<td style="width:200px;">data:</td>
+	<td>{{result.data|urlize}}</td>
+</tr>
+
+{% for key,val in result.items %}
+{% if key == "meta.merchantid" %}
+<tr>
+	<td>meta.merchantid:</td>
+	<td>{{val}}</td>
+</tr>
+{% endif %}
+{% endfor %}
+
+{% for key,val in result.items %}
+{% if key == "meta.xmlitem" %}
+{% for key2,val2 in val.items %}
+<tr>
+	<td>meta.xmlitem.{{key2}}</td>
+	<td>{{val2|urlize}}</td>
+</tr>
+{% endfor %}
+{% endif %}
+{% endfor %}
+	
+</table>
+</p>
+<br/>
+{% endif %}
+{# -------------------------------------------------------------------------------------- Crawler Output -#}
+
+
+
+
+{# - Scraper Output --------------------------------------------------------------------------------------#}
+{% if task.op == "scrap" %}
+<p>
+<table>
+
+{% for key,val in result.items %}
+{% if key == "data" %}
+{% for key2,val2 in val.items %}
+<tr>
+	<td>{{key2}}</td>
+	<td>{{val2|urlize}}</td>
+</tr>
+{% endfor %}
+{% endif %}
+{% endfor %}
+
+
+{% for key,val in result.items %}
+{% if key == "meta" %}
+{% for key2,val2 in val.items %}
+<tr>
+	<td>meta.{{key2}}</td>
+	<td>{{val2|urlize}}</td>
+</tr>
+{% endfor %}
+{% endif %}
+{% endfor %}
+
+
+</table>
+</p>
+<br/>
+{% endif %}
+{# -------------------------------------------------------------------------------------- Scraper Output -#}
+
+
+{% endfor %}
+{% endfor %}
+
+
+

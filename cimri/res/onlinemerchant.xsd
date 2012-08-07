@@ -1,0 +1,238 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schema targetNamespace="http://www.cimri.com/schema/merchant/upload"
+	elementFormDefault="qualified" xmlns="http://www.w3.org/2001/XMLSchema"
+	xmlns:tns="http://www.cimri.com/schema/merchant/upload">
+
+	<complexType name="MerchantItem">
+		<all>
+            <element name="brand" type="tns:MaxStringOrEmpty" maxOccurs="1" minOccurs="0">
+				<annotation>
+					<documentation>
+						Ürünün markası.Cimri kataloğunda daha iyi bir
+						eşleştirme yapabilmek için doldurulması tavsiye edilir.
+					</documentation>
+				</annotation>
+			</element>
+            <element name="itemTitle" type="tns:MaxString" maxOccurs="1"
+				minOccurs="1">
+				<annotation>
+					<documentation>
+						Cimri ürün sayfasında mağazanızda kullandığınız
+						o ürün ile alakalı başlığın aynı şekilde
+						görünmesi için.
+					</documentation>
+				</annotation>
+			</element>
+			<element name="itemUrl" type="tns:MaxString" maxOccurs="1"
+				minOccurs="1">
+				<annotation>
+					<documentation>
+						Cimri kullanıcısının o ürün ile alakalı sizin
+						sitenizde hangi sayfaya yönelmesi gerektiğini
+						gösteren URL.
+					</documentation>
+				</annotation>
+			</element>
+			<element name="merchantItemId" type="tns:Id" maxOccurs="1"
+				minOccurs="1">
+				<annotation>
+					<documentation>
+						Sizin sitenizde bu ürün ile alakalı
+						kullandığınız ID no. Amacı bir sonraki aynı
+						ürünün sisteme gönderilmesi sırasında sorunsuz
+						ve çok hızlı bir şekilde Cimri kataloğunda
+						eşleştirilmenin yapılabilmesi için.
+					</documentation>
+				</annotation>
+			</element>
+			<element name="merchantItemCategoryId" type="tns:IdOrEmpty"
+				maxOccurs="1" minOccurs="1">
+				<annotation>
+					<documentation>
+						Ürünün sizin kataloğunuzda listelendiği kategory
+						id.
+					</documentation>
+				</annotation>
+			</element>
+			<element name="merchantItemCategoryName"
+				type="tns:MaxStringOrEmpty" maxOccurs="1" minOccurs="0">
+				<annotation>
+					<documentation>
+						Ürünün sizin kataloğunuzdaki kategori adı. Cimri'de 
+						daha başarılı arama sonuçları için doldurmanız tavsiye
+						edilir.
+					</documentation>
+				</annotation>
+			</element>
+			<element name="merchantItemField"
+				type="tns:MaxStringOrEmpty" maxOccurs="1" minOccurs="0">
+				<annotation>
+					<documentation>
+						Başlık haricinde ürün ile alakalı başka vermek
+						istediğiniz bilgi için ayrılmış alan. 
+
+					</documentation>
+				</annotation>
+			</element>
+            <element name="model" type="tns:MaxStringOrEmpty" maxOccurs="1" minOccurs="0">
+			<annotation>
+					<documentation>
+						Ürünün sizin kataloğunuzdaki model ismi. Sadece model adı
+						yazılmalıdır. Bu kısma model adı dışında fazladan 
+						bilgi yazmak ürün eşleştirmesinde soruna neden olur. Model numarınızı
+						bilmiyorsanız boş bırakılması tavsiye edilir.
+						
+					</documentation>
+				</annotation>
+			</element>
+            <element name="mpnType" minOccurs="0" type="tns:MaxStringOrEmpty">
+				<annotation>
+					<documentation>
+						Ürün ile alakalı üretici ya da ürünü tanımlayan özel kod tipi
+						(Örneğin : EAN, UPC, Arena...).
+					</documentation>
+				</annotation>
+			</element>
+            <element name="mpnValue" type="tns:MaxStringOrEmpty" maxOccurs="1" minOccurs="0">
+				<annotation>
+					<documentation>
+						Ürün ile alakalı üreticinin ya da ürünün dağıtıcısının
+						verdiği özel kod.
+					</documentation>
+				</annotation>
+		
+			</element>
+            <element name="priceEft" type="tns:Price" maxOccurs="1"
+				minOccurs="0">
+				<annotation>
+					<documentation>
+						Ürün ile alakalı EFT ile ödeme yapıldığı
+						takdirde bir indirim uygulanıyorsa indirimli KDV
+						dahil fiyatınız.( Herhangi bir yüzde burada
+						belirtilmeyecektir. Net fiyat gösterilecek.
+						Binlik ayırac olarak nokta konulmayacak. Ve
+						kuruş ayıracı nokta olacak 123123.12 gibi )
+					</documentation>
+				</annotation>
+			</element>
+			<element name="pricePlusTax" type="tns:Price" maxOccurs="1"
+				minOccurs="0">
+				<annotation>
+					<documentation>
+						Ürün ile alakalı sıralamayı oluşturacak KDV
+						Dahil peşin fiyatınız.
+					</documentation>
+				</annotation>
+			</element>
+			<element name="price3T" type="tns:PriceOrEmpty"
+				maxOccurs="1" minOccurs="0">
+				<annotation>
+					<documentation>
+						Ürün ile alakalı 3 taksitli vadeli satış
+						fiyatınız. Boş bırakılabilir.
+					</documentation>
+				</annotation>
+			</element>
+			<element name="price6T" type="tns:PriceOrEmpty"
+				maxOccurs="1" minOccurs="0">
+				<annotation>
+					<documentation>
+						Ürün ile alakalı 6 taksitli vadeli satış
+						fiyatınız. Boş bırakılabilir.
+					</documentation>
+				</annotation>
+			</element>
+			<element name="price12T" type="tns:PriceOrEmpty"
+				maxOccurs="1" minOccurs="0">
+				<annotation>
+					<documentation>
+						Ürün ile alakalı 12 taksitli vadeli satış
+						fiyatınız. Boş bırakılabilir.
+					</documentation>
+				</annotation>
+			</element>
+			<element name="price24T" type="tns:PriceOrEmpty"
+				maxOccurs="1" minOccurs="0">
+				<annotation>
+					<documentation>
+						Ürün ile alakalı 24 taksitli vadeli satış
+						fiyatınız. Boş bırakılabilir.
+					</documentation>
+				</annotation>
+			</element>
+		</all>		
+	</complexType>
+	
+	<complexType name="MerchantItems">
+		<sequence>
+			<element name="MerchantItem" type="tns:MerchantItem"
+				maxOccurs="1000000" minOccurs="1">
+			</element>
+		</sequence>
+	</complexType>
+
+	<element name="MerchantItems" type="tns:MerchantItems"></element>
+
+	<simpleType name="Price">
+		<restriction base="decimal">
+			<fractionDigits value="10"></fractionDigits>
+			<totalDigits value="17"></totalDigits>
+			<minInclusive value="0"></minInclusive>
+		</restriction>
+	</simpleType>
+	
+	<simpleType name="Tax" >
+		<restriction base="decimal">
+			<fractionDigits value="10"></fractionDigits>
+			<totalDigits value="17"></totalDigits>
+		</restriction>
+	</simpleType>
+	
+	<simpleType name="MaxString">
+		<restriction base="string">
+			<minLength value="1"></minLength>
+			<maxLength value="1000"></maxLength>
+		</restriction>
+	</simpleType>
+	
+	<simpleType name="Id">
+		<restriction base="string">
+			<minLength value="1"></minLength>
+			<maxLength value="255"></maxLength>
+		</restriction>
+	</simpleType>
+	
+	<simpleType name="IdOrEmpty">
+		<restriction base="string">
+			<minLength value="0"></minLength>
+			<maxLength value="255"></maxLength>
+		</restriction>
+	</simpleType>
+	
+	<simpleType name="PriceOrEmpty">
+		<union>
+			<simpleType>
+				<restriction base="tns:Tax"></restriction>
+			</simpleType>
+			<simpleType>
+				<restriction base="string">
+					<length value="0"></length>
+				</restriction>
+			</simpleType>
+		</union>
+	</simpleType>
+
+
+	<simpleType name="MaxStringOrEmpty">
+		<union>
+			<simpleType>
+				<restriction base="tns:MaxString"></restriction>
+			</simpleType>
+			<simpleType>
+				<restriction base="string">
+					<length value="0"></length>
+				</restriction>
+			</simpleType>
+		</union>
+	</simpleType>
+</schema>

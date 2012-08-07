@@ -1,0 +1,123 @@
+<script type="text/javascript">
+	function activate(merchantid,action){
+		var args={"merchant":merchantid,
+			  "activate":action};
+
+		var handler={"success":function(data){
+				window.location="/system/reports/scraper/";
+			     },
+			     "error":  function(err){
+				;
+			     }
+		};
+		$.cimri_cpanel.comm.call("/scraper/control/",args,handler);
+	}
+
+	function create_training(merchantid){
+		var module="cimri.module.scrapper.dom.DOMScrapper";
+		var label="scraper training (system) - "+merchantid;
+
+		//create
+		var args={"label":label,
+		          "merchant":merchantid,
+			  "module":module,
+			  "action":"update",
+			  "system":1};
+
+		//progress indicator
+		progress("şablon yaratılıyor... ");
+
+		var handler={"success":function(data){
+				id=data["id"];
+				tid=data["tid"];
+				refreshstatus(5000);
+			     },
+			     "error":  function(err){
+					showerror();
+			     }
+		};
+		$.cimri_cpanel.comm.call("/training/new/",args,handler);
+	}
+
+	var id="";
+	var tid="";
+	var handler={success:	function(status){
+					if(status){
+						window.location="/scraper/training/"+id+"/build";
+						return;
+					}
+					refreshstatus(15000);
+				},
+		     error: 	function(err){
+					refreshstatus(15000);
+				}
+	};
+
+	function refreshstatus(tout){
+		setTimeout('$.cimri_cpanel.comm.call("/training/check/"+id+"/"+tid,null,handler)',tout)
+	}
+
+	function progress(msg){
+		var html='<p><h3>Yeni İşlem</h3></p>';
+		html=html+'<p id="msg">'+msg+' <img src="/res/img/loader.gif" /></p>';
+		$("#content").html(html);
+	}
+
+	function showerror(){
+		var html='<p><h3>Yeni İşlem</h3></p>';
+		html=html+'<p id="msg">bir işlem hatası oluştu.</p>';
+		$("#content").html(html);
+	}
+
+</script>
+
+
+<p>
+	<h3>Scraper Raporları</h3>
+</p>
+
+<p class="comment">
+	<table>
+{% for merchant in merchants %}
+	<tr>
+		<td style="width:50px;">{{merchant.id}}</td>
+		<td style="wdith:300px;">{{merchant.name|truncatewords:4}}</td>
+	{% for status in statuses %}
+		{% if status.merchantid == merchant.id %}
+			{% if status.is_trained %}
+		<td style="width:150px;"> eğitimli</td>
+		<td style="width:150px;"> {{ status.accuracy }}</td>
+		<td style="width:200px;"> {{ status.scraped_fields }}</td>
+		<td> 
+				{% if status.is_approved %}
+					<a href="javascript:;" onclick="activate({{merchant.id}},0)">onayı iptal et</a>
+				{% else %}
+					<a href="javascript:;" onclick="activate({{merchant.id}},1)">onayla</a>
+				{% endif %}
+		</td>
+			{% else %}
+		<td style="width:150px;"> <span style="color:#ffffff">eğitimsiz</span></td>
+		<td style="width:150px;">{{status.price_accuracy.5pct}}/{{status.price_accuracy.10pct}}</td>
+		<td style="width:200px;">
+			{% if status.errors.access > 0 %}
+			<span style="color:#cc0000">{{ status.errors.access }}</span>
+			{% endif %}
+		</td>
+		<td> 
+					<a href="/data/scraper/{{merchant.id}}/items/?age=1440&format=html&skip=0" target="_blank">log</a>
+		<!--
+				{% if status.is_approved %}
+					<a href="javascript:;" onclick="activate({{merchant.id}},0)">onayı iptal et</a>
+				{% else %}
+					<a href="javascript:;" onclick="activate({{merchant.id}},1)">onayla</a>
+				{% endif %}
+			<a href="javascript:;" onclick="create_training({{merchant.id}})">eğit</a>
+		//-->
+		</td>
+			{% endif %}
+
+		{% endif %}
+	{% endfor %}
+{% endfor %}
+	</table>
+</p>

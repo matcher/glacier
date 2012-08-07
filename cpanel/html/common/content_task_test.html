@@ -1,0 +1,249 @@
+<p>
+	<h3>İşlem Sonuçları</h3>
+</p>
+
+
+<p>
+<table>
+<tr>
+	<td style="width:250px;"></td>
+{% if report.0.op == "scrap" %}
+	<td style="width:250px;"><b>scraper sonuçları</b></td>
+{% endif %}
+{% if report.0.op == "match" or report.0.op == "match-sim" %}
+	<td style="width:250px;"><b>matcher sonuçları</b></td>
+{% endif %}
+	<td><b>test referans değerleri</b></td>
+</tr>
+
+
+{% for task in report %}
+{% for result in task.result %}
+
+
+{# - Scraper Output --------------------------------------------------------------------------------------#}
+{% if task.op == "scrap" %}
+
+<tr style="height:20px;"><td colspan=3"></td></tr>
+<tr>
+	<td><i>merchantItemUrl:</i></td>
+	<td colspan="2"><i>{{result.data.merchantItemUrl|urlize}}</i></td>
+</tr>
+
+<tr>
+	<td><i>merchantId:</i></td>
+	<td colspan="2"><i>{{result.data.merchant.merchantId}}</i></td>
+</tr>
+
+{% for key,val in result.items %}
+{% if key == "meta.refitem" %}
+{% for field,refvalue in val.items %}
+{% if refvalue != None %}
+    {% for key1,val1 in result.items %}
+    {% if key1 == "meta.scrapitem" %}
+    {% for field2,value in val1.items %}
+    {% if field2 == field %}
+    <tr {% if value != refvalue %}style="color:#cc0000;"{% endif %}>
+	<td>{{field}}</td>
+	<td>{{value}}</td>
+	<td>{{refvalue}}</td>
+    </tr>
+    {% endif %}
+    {% endfor %}
+    {% endif %}
+    {% endfor %}
+{% endif %}
+{% endfor %}
+{% endif %}
+{% endfor %}
+
+{% endif %}
+{# -------------------------------------------------------------------------------------- Scraper Output -#}
+
+
+
+{# - Matcher Output --------------------------------------------------------------------------------------#}
+{% if task.op == "match" or task.op == "match-sim" %}
+<tr style="height:20px;"><td colspan=3"></td></tr>
+<tr>
+	<td><i>merchantItemUrl:</i></td>
+	<td colspan="2"><i>{{result.data.merchantItemUrl|urlize}}</i></td>
+</tr>
+
+<tr>
+	<td><i>merchantId:</i></td>
+	<td colspan="2"><i>{{result.data.merchant.merchantId}}</i></td>
+</tr>
+
+
+{% for meta,refitem in result.items %}
+{% if meta == "meta.refitem" %}
+
+
+{% if result.data.item.itemId == refitem.item.itemId and result.data.item != None %}
+<tr>
+{% else %}
+	{% if result.data.possibleSolrItem.itemId == refitem.item.itemId and result.data.possibleSolrItem != None %}
+<tr style="color:#00cc00;">
+	{% else %}
+		{% if result.data.item.itemId != refitem.item.itemId and result.data.possibleSolrItem.itemId != refitem.item.itemId %}
+<tr style="color:#cc0000;">
+		{% else %}
+			{% if refitem.item == None and result.data.item != None or result.data.possibleSolrItem != None %}
+<tr style="color:#cc0000;">
+			{% endif %}
+		{% endif %}
+	{% endif %}
+{% endif %}
+	<td>item</td>
+	<td>{{result.data.item.itemId}}</td>
+	<td>{{refitem.item.itemId}}</td>
+</tr>
+
+
+
+{% if result.data.item.itemId == refitem.item.itemId and result.data.item != None %}
+<tr>
+{% else %}
+	{% if result.data.possibleSolrItem.itemId == refitem.item.itemId and result.data.possibleSolrItem != None %}
+<tr style="color:#00cc00;">
+	{% else %}
+		{% if result.data.item.itemId != refitem.item.itemId and result.data.possibleSolrItem.itemId != refitem.item.itemId %}
+<tr style="color:#cc0000;">
+		{% else %}
+			{% if refitem.item == None and result.data.item != None or result.data.possibleSolrItem != None %}
+<tr style="color:#cc0000;">
+			{% endif %}
+		{% endif %}
+	{% endif %}
+{% endif %}
+	<td>possibleSolrItem</td>
+	<td>{{result.data.possibleSolrItem.itemId}}</td>
+	<td>{{refitem.possibleSolrItem.itemId}}</td>
+</tr>
+
+<tr>
+	<td>merchantItemTitle:</td>
+	<td>{{result.data.merchantItemTitle}}</td>
+	<td>{{refitem.merchantItemTitle}}</td>
+</tr>
+<tr>
+	<td>mpnValue:</td>
+	<td>{{result.data.mpnValue}}</td>
+	<td>{{refitem.mpnValue}}</td>
+</tr>
+<tr>
+	<td>brand:</td>
+	<td>{{result.data.brand}}</td>
+	<td>{{refitem.brand}}</td>
+</tr>
+
+{% endif %}
+{% endfor %}
+
+
+{% endif %}
+{# -------------------------------------------------------------------------------------- Matcher Output -#}
+
+
+
+{% endfor %}
+{% endfor %}
+
+
+</table>
+</p>
+<br/>
+
+
+
+
+{% for task in report %}
+
+{# - Matcher Plots --------------------------------------------------------------------------------------#}
+{% if task.op == "match" or task.op == "match-sim" and stats != None %}
+
+<script type="text/javascript" src="/res/js/protovis.min.js"></script>
+
+<script type="text/javascript">
+
+var width=900;
+var height=600;
+var left=24;
+var bottom=10;
+var scale=25;
+
+</script>
+
+<div>
+<p>
+	<h3>Successful Direct Matches</h3>
+</p>
+
+<script type="text/javascript+protovis">
+var data={{ stats.direct_success|safe }}
+var xtick=width/data[0].length;
+new pv.Panel().width(width).height(height)
+.add(pv.Line).data(data[0]).left(function(d) left+this.index*xtick).bottom(function(d) bottom+d*scale).strokeStyle(pv.colors("red"))
+.add(pv.Line).data(data[1]).left(function(d) left+this.index*xtick).bottom(function(d) bottom+d*scale).strokeStyle(pv.colors("blue"))
+.root.render();
+</script>
+</div>
+
+
+<div>
+<p>
+	<h3>Successful Direct Matches - Spread</h3>
+</p>
+
+<script type="text/javascript+protovis">
+var data={{ stats.direct_success_spread|safe }}
+var xtick=width/data[0].length;
+new pv.Panel().width(width).height(height)
+.add(pv.Area).data(data[0]).left(function(d) left+this.index*xtick).height(function(d) d*scale).bottom(bottom)
+.add(pv.Rule).data(pv.range(0,20,1)).left(left).right(0).bottom(function(d) bottom+d*scale).strokeStyle("white")
+.add(pv.Label).textAlign("right").textBaseline("middle").text(function(d) (d).toFixed(1))
+.root.render();
+</script>
+</div>
+
+
+<div>
+<p>
+	<h3>Failed Direct Matches</h3>
+</p>
+
+<script type="text/javascript+protovis">
+var data={{ stats.direct_fail|safe }}
+var xtick=width/data[0].length;
+new pv.Panel().width(width).height(height)
+.add(pv.Line).data(data[0]).left(function(d) left+this.index*xtick).bottom(function(d) bottom+d*scale).strokeStyle(pv.colors("red"))
+.add(pv.Line).data(data[1]).left(function(d) left+this.index*xtick).bottom(function(d) bottom+d*scale).strokeStyle(pv.colors("blue"))
+.add(pv.Line).data(data[2]).left(function(d) left+this.index*xtick).bottom(function(d) bottom+d*scale).strokeStyle(pv.colors("green"))
+.root.render();
+</script>
+</div>
+
+
+<div>
+<p>
+	<h3>Failed Direct Matches - Spread</h3>
+</p>
+
+<script type="text/javascript+protovis">
+var data={{ stats.direct_fail_spread|safe }}
+var xtick=width/data[0].length;
+new pv.Panel().width(width).height(height)
+.add(pv.Area).data(data[0]).left(function(d) left+this.index*xtick).height(function(d) d*scale).bottom(bottom)
+.add(pv.Rule).data(pv.range(0,20,1)).left(left).right(0).bottom(function(d) bottom+d*scale).strokeStyle("white")
+.add(pv.Label).textAlign("right").textBaseline("middle").text(function(d) (d).toFixed(1))
+.root.render();
+</script>
+</div>
+
+
+
+{% endif %}
+{# -------------------------------------------------------------------------------------- Matcher Plots -#}
+
+{% endfor %}

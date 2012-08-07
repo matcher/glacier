@@ -1,0 +1,13 @@
+<p>
+	<h3>Kullanıcılar</h3>
+</p>
+
+<table width="100%">
+{% for user in users %}
+	<tr>
+		<td>{{user.name}}</td>
+		<td>{{user.email}}</td>
+		<td>{{user.type}}</td>
+	</tr>
+{% endfor %}
+</table>

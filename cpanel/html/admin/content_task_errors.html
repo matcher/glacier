@@ -1,0 +1,13 @@
+<p>
+	<h3>İşlem Hataları</h3>
+</p>
+{% for task in report %}
+<p>
+{% for line in task.error %}
+{{line|urlize}}<br/>
+{% endfor %}
+</p>
+{% endfor %}
+
+
+

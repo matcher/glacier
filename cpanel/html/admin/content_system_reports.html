@@ -1,0 +1,29 @@
+<p>
+	<h3>İşlem Raporları</h3>
+</p>
+
+<p class="comment">
+	<table>
+{% for info in reports %}
+	<tr>
+		<td>{{info.created}}</td>
+		<td style="width:250px;">{{info.tags}}</td>
+		<td style="width:250px;">{{info.ops}}</td>
+		<td style="width:100px;"> 
+
+	{% if info.status == "started" %}
+			  işlemde
+	{% endif %}
+	{% if info.status == "complete" %}
+			tamamlandı
+	{% endif %}
+	{% if info.status == "error" %}	
+			<span style="color:#DD0000">hata</span> 
+	{% endif  %}			
+		</td>
+		<td> 
+			<a href="/system/reports/{{info.id}}/">detaylar</a>
+		</td>
+{% endfor %}
+	</table>
+</p>

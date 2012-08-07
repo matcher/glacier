@@ -1,0 +1,40 @@
+body{
+	padding:0px;
+	margin:0px;
+}
+
+.header{
+	height:40px;
+	width: %100;
+	background-color:#e0e0e0;
+	margin-bottom:4px;
+	padding:4px;
+}
+.menu{
+	padding:4px;
+}
+.content{
+	padding:4px;
+}
+
+a:link{
+	color:#333366;
+	text-decoration:none;
+}
+a:visited{
+	color:#333366;
+}
+a:hover{
+	color:#666699;
+}
+a:active{
+	color:#9999cc;
+}
+
+.error{
+	color:#a00000;
+}
+
+.comment{
+	color:#999999;
+}

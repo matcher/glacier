@@ -1,0 +1,35 @@
+<script type="text/javascript">
+	var handler={success:	function(status){
+					if(status){
+						showready();
+						return;
+					}
+					refreshstatus(15000);
+				},
+		     error: 	function(err){
+					refreshstatus(15000);
+				}
+	};
+
+	function refreshstatus(tout){
+		setTimeout('$.cimri_cpanel.comm.call("/training/check/{{data.id}}/{{tid}}",null,handler)',tout)
+	}
+
+	$(document).ready(function(){
+		refreshstatus(5000);
+	})
+
+	function showready(){
+		var msg='yeni eğitim işlemi yaratılmıştır. işlemi hazırlamak için <a href="/{% if data.op == "match" %}matcher{% else %}scraper{% endif %}/training/{{data.id}}/build">tıklayınız</a>';
+		$("#msg").html(msg);
+	}
+
+</script>
+
+<p>
+	<h3>Scraper Eğitimi</h3>
+</p>
+
+<p id="msg">
+ 	eğitim işlemi hazırlanıyor. lütfen işlem tamamlanıncaya kadar bekleyiniz ve sayfayı kapatmayınız <img src="/res/img/loader.gif" /> 
+</p>

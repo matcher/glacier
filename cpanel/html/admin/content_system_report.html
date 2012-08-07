@@ -1,0 +1,221 @@
+<p>
+	<h3>İşlem Raporu</h3>
+</p>
+
+{% for task in report %}
+<a href="/system/reports/data/{{task.id}}/">veriler</a> |
+<a href="/system/reports/result/{{task.id}}/">sonuçlar</a> |
+<a href="/system/reports/error/{{task.id}}/">hatalar</a> |
+<a href="/system/reports/log/{{task.id}}/">log</a> 
+<table>
+<tr>
+	<td style="width:200px">etiket</td>
+	<td>{{task.threadtags}}</td>
+</tr>
+<tr>
+	<td>modül:</td>
+	<td>{{task.target}}</td>
+</tr>
+<tr>
+	<td>iş</td>
+	<td>{{task.op}}</td>
+</tr>
+<tr>
+	<td>statü</td>
+	<td>{{task.status}}</td>
+</tr>
+<tr>
+	<td>veri boyutu</td>
+	<td>{{task.stats.data.total}}</td>
+</tr>
+<tr>
+	<td>işlenmiş veri boyutu</td>
+	<td>{{task.stats.data.processed}}</td>
+</tr>
+<tr>
+	<td>hatalar</td>
+{% if task.stats.errors > 0 %}
+	<td><span style="color:#DD0000"><b>{{task.stats.errors}}</b></span></td>
+{% else %}
+	<td>0</td>
+{% endif %}
+</tr>
+<tr>
+	<td>süre</td>
+	<td>{{task.duration}}</td>
+</tr>
+<tr>
+	<td>id</td>
+	<td>{{task.id}}</td>
+</tr>
+<tr>
+	<td>thread id</td>
+	<td>{{task.threadid}}</td>
+</tr>
+{% for meta,value in task.meta.items %}
+<tr>	
+	<td>
+	{% if meta == "cache.read" %}
+      		cache bölümünden oku
+	{% endif %}
+	{% if meta == "cache.write" %}
+                cache bölümünü güncelle
+	{% endif %}
+	{% if meta == "untrained" %}
+                eğitimsiz
+	{% endif %}
+	{% if meta == "benchmark" %}
+                benchmark
+	{% endif %}
+	{% if meta == "workers" %}
+		işlemciler
+	{% endif %}
+	{% if meta == "merchants.id" %}
+		merchant
+	{% endif %}
+	{% if meta == "merchants.index" %}
+		ilk merchant endeksi
+	{% endif %}
+	{% if meta == "merchants.range" %}
+		merchant sayısı
+	{% endif %}
+	{% if meta == "merchants.items.index" %}
+		ilk merchant item endeksi
+	{% endif %}
+	{% if meta == "merchants.items.range" %}
+		merchant item sayısı
+	{% endif %}
+	{% if meta == "test" %}
+		test
+	{% endif %}
+	{% if meta == "test.uuid" %}
+		test.uuid
+	{% endif %}
+	{% if meta == "train" %}
+		train
+	{% endif %}
+	{% if meta == "train.uuid" %}
+		train.uuid
+	{% endif %}
+	</td>
+	<td>
+	{{value}}
+	</td>
+</tr>
+{% endfor %}
+
+{% if task.op == "match" or task.op == "match-sim" or task.op == "match-update" %}
+<tr>	
+	<td colspan="2"><b>match sonuçları</b> (<a href="/system/analytics/test/{{task.id}}/">analiz)</a>
+</td>
+</tr>
+{% endif %}
+
+{% if task.op == "match" or task.op == "match-sim" %}
+<tr>
+	<td>direct match:</td>
+	<td>{{task.stats.data.matched.total}} 
+	   ({{task.stats.data.matched.insert}} insert, 
+	    {{task.stats.data.matched.update}} update, 
+	    {{task.stats.data.matched.matched_same}} same match, 
+	    {{task.stats.data.matched.matched_diff}} diff. match, 
+	    {{task.stats.data.matched.zero_price}} zero price, 
+	    {{task.stats.data.matched.matched_to_active}} matched to active,
+	    {{task.stats.data.matched.duplicate}} duplicate)</td>
+</tr>
+<tr>
+	<td>possible match:</td>
+	<td>{{task.stats.data.guessed.total}} 
+           ({{task.stats.data.guessed.insert}} insert, 
+	    {{task.stats.data.guessed.update}} update,
+	    {{task.stats.data.guessed.guessed_same}} same guess,
+	    {{task.stats.data.guessed.guessed_diff}} diff. guess,
+	    {{task.stats.data.guessed.zero_price}} zero price)</td>
+</tr>
+<tr>
+	<td>no match:</td>
+	<td>{{task.stats.data.nomatch.total}} 
+ 	   ({{task.stats.data.nomatch.insert}} insert, 
+            {{task.stats.data.nomatch.matched}} matched before,
+            {{task.stats.data.nomatch.newitem}} new item,
+            {{task.stats.data.nomatch.blacklist}} blacklist,
+            {{task.stats.data.nomatch.zero_price}} zero price)</td>
+</tr>
+{% endif %}
+
+{% if task.op == "match" or task.op == "match-sim" or task.op == "match-update" %}
+<tr>
+	<td>updateler:</td>
+	<td>{{task.stats.data.updates.total}} 
+({% for key,val in task.stats.data.updates.items %}
+{{val}} {{key}}
+{% endfor %}
+)
+	</td>
+</tr>
+{% endif %}
+
+
+{% if task.op == "update" %}
+<tr>	
+	<td colspan="2"><b>update sonuçları</b></td>
+</tr>
+
+<tr>
+	<td>updateler:</td>
+	<td>{{task.stats.data.actions.total}} 
+	   ({{task.stats.data.actions.insert}} insert, 
+	    {{task.stats.data.actions.update}} update) 
+	</td>
+</tr>
+
+{% endif %}
+
+
+{% if "test" in task.meta or task.op == "match-sim" %}
+<tr>	
+<!--
+	<td colspan="2"><b>test sonuçları</b> (<a href="/system/reports/test/{{task.id}}/">detaylar</a>):</td>
+-->
+	<td colspan="2"><b>test sonuçları</b>:</td>
+</tr>
+
+{% if task.op == "scrap" %}
+{% for meta,value in task.stats.test.items %}
+{% if meta == "accuracy.field" %}
+<tr>
+	<td>başarı oranı:</td>
+	<td>{{value}}% (genel: {{task.stats.test.accuracy}}%, {{task.stats.test.passed}} doğru, {{task.stats.test.failed}} hatalı)</td>
+</tr>
+{% endif %}
+{% endfor %}
+
+{% for field,stats in task.stats.test.fields.items %}
+<tr>
+	<td>{{field}}:</td>
+	<td>{{stats.a}}% ({{stats.p}}, {{stats.f}})</td>
+</tr>
+{% endfor %}
+{% endif %}
+
+
+{% if task.op == "match" or task.op == "match-sim" %}
+<tr>
+	<td>başarı oranı:</td>
+	<td>{{task.stats.test.match_percent}}% ({{task.stats.test.accuracy}}% doğru), {{task.stats.test.passed}} doğru, {{task.stats.test.failed}} hatalı</td>
+</tr>
+<tr>
+	<td>tahmin oranı:</td>
+	<td>{{task.stats.test.guess_percent}}% ({{task.stats.test.guess_accuracy}}% doğru), {{task.stats.test.guessed}} doğru tahmin, {{task.stats.test.badguess}} hatalı</td>
+</tr>
+{% endif %}
+
+
+{% endif %}
+
+
+
+</table>
+<br/><br/>
+
+{% endfor %}

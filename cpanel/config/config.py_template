@@ -1,0 +1,48 @@
+""" 
+cimri matcher control panel
+---------------------------
+date:                    01.31.2012
+author:                  gun@alppay.com
+
+description:
+------------
+
+revision history: 
+-----------------
+gun@alppay.com:          initial version
+
+"""
+
+import os.path
+import sys
+
+__cpanel_app_path__="/var/www/cimri/cpanel"
+__cimri_matcher_api_path__="/opt/cimri"
+
+if __cimri_matcher_api_path__ not in sys.path:
+    sys.path.append(__cimri_matcher_api_path__)
+
+class Config():
+	#application path
+	app_path=__cpanel_app_path__
+
+	#matcher master controller info
+	matcher_controller_host="127.0.0.1"
+	matcher_controller_port=10100
+
+	#session cookie name
+	session_cookie_name="cimri.cpanel.dev"
+
+	#db 
+	mongo_db="cimri-cpanel-dev"	#development
+#	mongo_db="cimri-cpanel"		#production
+	
+	#url for static files
+	resource_url="/res"
+	
+	#password hashing key
+	pwd_key="24813fab-384d-48ec-884d-3648d580b717"
+	
+	#log config file
+	log_config=os.path.join(__cpanel_app_path__,"config/logger.conf")
+	

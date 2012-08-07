@@ -1,0 +1,201 @@
+<p>
+	<h3>İşlem Analizi <span id="filter"></span></h3>
+</p>
+
+<script type="text/javascript">
+	var items={{ items|safe }};
+	var statuses=["matched-wrong","not-matched","guessed","guessed-wrong"];
+
+	$(document).ready(function(){
+		init();
+	});
+
+	function init(){
+		render();
+	}
+
+	function show(filter){
+		var label='';
+		if(filter!='')
+			label=' - '+filter;
+		$("#filter").html(label);
+
+		if(filter==''){
+			$("[id^=item_]").show();
+		}else{
+			for(var i=0;i<statuses.length;i++)
+				if(statuses[i]==filter)
+					$("."+statuses[i]).show();
+				else
+					$("."+statuses[i]).hide();
+		}	
+	}
+
+	function render(){
+		//clear items
+		$("#items").html("");
+
+		//render items
+		for(var i=0;i<items.length;i++){
+			renderitem(items[i],i);
+		}
+	}	
+
+	function renderitem(item,index){
+		//get cell color
+		var scale=1;
+		var color="red";
+		if(item.status=="matched-wrong"){
+			//find the actual match
+			var score=0;
+			for(var i=0;i<item.matches.length;i++){
+				if(item.matches[i].id==item.refitem.item.itemId){
+					score=item.matches[i].score;
+					break;
+				}
+			}
+
+			//color red if the first match score was close to the correct item's match score, black otherwise
+			scale=1.0-(item.score-score)/item.score;
+
+		}else if(item.status=="not-matched"){
+			scale=0;
+		}else if(item.status=="guessed"){
+			color="green";
+
+			//get 2nd score
+			var score=0;
+			if(item.matches.length>1)
+				score=item.matches[1].score;
+
+			//color green to represent a large separation between the top 2 matches, black otherwise
+			scale=(item.score-score)/item.score;			
+			
+		}else if(item.status=="guessed-wrong"){
+			color="green";		
+
+			//find the actual match
+			var score=0;
+			for(var i=0;i<item.matches.length;i++){
+				if(item.matches[i].id==item.refitem.item.itemId){
+					score=item.matches[i].score;
+					break;
+				}
+			}
+
+			//color green if the first match score was close to the correct item's match score, black otherwise
+			scale=1.0-(item.score-score)/item.score;
+		}
+		
+		var shade=Math.floor(255*scale).toString(16);
+		if(shade.length==1)
+			shade="0"+shade;
+		var font='#f0f0f0';
+		if(color=="red"){
+			color=shade+"0000";
+		}else if(color=="green"){
+			color="00"+shade+"00";
+			font='#303030';
+		}else if(color=="yellow"){
+			color=shade+shade+"00";
+			font='#303030';
+		}
+
+		//get score
+		var score=Math.ceil(1000*item["score"])/1000;
+		score='<span style="font-size:11px;color:'+font+';">'+score+'</span>';
+
+		var html='<div id="item_'+index+'" onclick="showitem('+index+')" class="'+item['status']+'" style="float:left;width:40px;height:40px;background-color:#'+color+'">'+score+'</div>';
+		$("#items").append(html);
+	}
+
+	function showitem(index){
+		if(index<0 || index==items.length)
+			return;
+
+		//get item
+		var item=items[index];
+
+		//get content
+		var content=[];
+
+		//get correct item id (if there's a refitem)
+		var itemid=-1;
+		if(item.refitem["item"]!=undefined)
+			itemid=item.refitem["item"]["itemId"];
+
+		//item info
+		content.push('<div style="float:left;width:150px">item</div>');
+		content.push('<div style="float:left;width:800px">');
+		content.push('merchant/merchantItem: '+item.item["merchant"]["merchantId"]+' / '+item.item["merchantItemId"]+'<br/>');
+		content.push('merchantItemTitle    : '+item.item["merchantItemTitle"]+'<br/>');
+		content.push('merchantItemUrl      : '+'<a href="'+item.item["merchantItemUrl"]+'" target="_blank">'+item.item["merchantItemUrl"]+'</a><br/>');
+		content.push('brand                : '+item.item["brand"]+'<br/>');
+		content.push('modelNameView        : '+item.item["modelNameView"]+'<br/>');
+		content.push('mpnValue             : '+item.item["mpnValue"]+'<br/>');
+		content.push('</br></div>');
+
+
+		//reference item info
+		if(item.refitem["item"]!=undefined){
+			content.push('<div style="float:left;width:150px">ref. item</div>');
+			content.push('<div style="float:left;width:800px">');
+			content.push('itemId               : '+item.refitem["item"]["itemId"]+'<br/>');
+			content.push('merchant/merchantItem: '+item.refitem["merchant"]["merchantId"]+' / '+item.refitem["merchantItemId"]+'<br/>');
+			content.push('merchantItemTitle    : '+item.refitem["merchantItemTitle"]+'<br/>');
+			content.push('merchantItemUrl      : '+'<a href="'+item.refitem["merchantItemUrl"]+'" target="_blank">'+item.refitem["merchantItemUrl"]+'</a><br/>');
+			content.push('brand                : '+item.refitem["brand"]+'<br/>');
+			content.push('modelNameView        : '+item.refitem["modelNameView"]+'<br/>');
+			content.push('mpnValue             : '+item.refitem["mpnValue"]+'<br/>');
+			content.push('</br></div>');
+		}
+
+		//matches
+		content.push('<div style="float:left;width:150px">matches</div>');
+		content.push('<div style="float:left;width:800px">');
+		for(var i=0;i<item.matches.length;i++){
+			var match=item.matches[i];
+			var bg="";
+			if(item.status=="matched-wrong" && match.id==item.item["item"]["itemId"])
+				bg='background-color:#a0a0a0';			
+			if(item.status=="guessed-wrong" && match.id==item.item["possibleSolrItem"]["itemId"])
+				bg='background-color:#a0a0a0';			
+			if(match.id==itemid)
+				bg='background-color:#ffff00';
+			content.push('<span style="width:800px;'+bg+'">');
+			content.push('score                : '+match["score"]+'<br/>');					
+			content.push('id                   : '+match["id"]+'<br/>');					
+			content.push('title2               : '+match["title2"]+'<br/>');					
+			content.push('brand                : '+match["brand"]+'<br/>');					
+			content.push('mainSpecsKeywords2   : '+match["mainSpecsKeywords2"]+'<br/>');					
+			content.push('keywords             : '+match["keywords"]+'<br/>');					
+			content.push('mpnValue             : '+match["mpnValue"]+'<br/><br/>');
+			content.push('</span>');					
+		}
+		content.push('</div>');
+		content.push('<div style="float:none; clear:both;"></div>');
+		var html="";
+            	html+='<div style="padding:8px; width:980px; background-color:#f8f8f8;">';
+//          	html+='<br/><a href="javascript:;" onclick="showitem('+(index-1)+')">&lt;&lt;</a> |';
+ //         	html+='<a href="javascript:;" onclick="showitem('+(index+1)+')">&gt;&gt;</a><br/>';
+          	html+='<br/><strong>Match Analysis</strong><br/><br/>';
+		html+=content.join('');
+		html+="<br/><br/>";
+                html+='<a href="javascript:;" onclick="$.colorbox.close()">kapat</a>';
+		html+='</div>';
+
+                $.colorbox({html:html,overlayClose:true});
+	}
+</script>
+
+<div>
+	<div>
+		<a href="javascript:;" onclick="show('')">all</a> | 
+		<a href="javascript:;" onclick="show('matched-wrong')">wrong match</a> | 
+		<a href="javascript:;" onclick="show('not-matched')">no match</a> | 
+		<a href="javascript:;" onclick="show('guessed')">guessed</a> | 
+		<a href="javascript:;" onclick="show('guessed-wrong')">wrong guess</a>
+	</div>
+
+	<div id="items" style="width:1080px;"></div>
+</div>

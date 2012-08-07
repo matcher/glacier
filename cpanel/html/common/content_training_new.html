@@ -1,0 +1,44 @@
+<p>
+	<h3>Sistem Eğitimi</h3>
+</p>
+
+<p>
+	<h4>Yeni Eğitim</h4>
+</p>
+
+<div id="msg" style="height:20px;">
+{% if error %}
+        <span class="error">! {{ error }}</span>
+{% endif %}
+</div>
+
+<input type="hidden" id="action" value="update" />
+
+<table>
+<tr style="width:150px;">
+	<td>isim:</td>
+	<td><input type="text" id="label" value="{{target.label}}"/></td>
+</tr>
+<tr>
+        <td>modül:</td>
+	<td> <select id="module">
+                <option value="cimri.module.scrapper.dom.DOMScrapper" selected="selected">DOMScrapper</option>
+             </select>
+	</td>
+</tr>
+<tr>
+        <td>merchant:</td>
+	<td> <select id="merchant" style="width:200px">
+		<option value="*" selected="selected">*</option>
+        {% for merchant in merchants %}
+                <option value="{{merchant.id}}">{{merchant.name}}</option>
+        {% endfor %}
+             </select>
+	</td>
+</tr>
+	<td align="right" colspan="2">
+	        <a href="javascript:;" onclick="$.cimri_cpanel.submitcontent('content','/training/new/')">kayıt et</a>
+	</td>
+</tr>
+</table>
+

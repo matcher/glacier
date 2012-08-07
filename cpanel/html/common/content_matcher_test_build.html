@@ -1,0 +1,220 @@
+<script type="text/javascript">
+	var index=-1;
+	var data={{data|safe}};
+	var spec=['merchantItemTitle','brand','mpnValue','item.itemId'];
+
+	function getfieldid(field){
+		if(field.split(".").length>1)
+			return field.split(".").join("");
+		else
+			return field;
+	}
+
+	function getfieldvalue(item,field){
+		var tokens=field.split(".");
+		if(item[tokens[0]]==null)
+			return null;
+		if(tokens.length==1)
+			return item[tokens[0]];
+		else
+			return item[tokens[0]][tokens[1]];
+	}	
+
+	function setfieldvalue(item,field,val){
+		var tokens=field.split(".");
+		if(tokens.length==1)
+			item[tokens[0]]=val;
+		else{
+			if(item[tokens[0]]==null)
+				item[tokens[0]]={};
+			item[tokens[0]][tokens[1]]=val;
+		}
+	}	
+	
+	function setitem(itemid){
+		if(itemid==null)
+			itemid="";
+		$("#itemitemId").val(itemid);
+	}
+
+	function fromxml(){
+		show(true);
+	}
+	
+	function hidecatalogue(){
+		$.colorbox.close();
+		$("#site").css("display","block");
+	}
+
+	function showcatalogue(items){
+		var id=$("#itemitemId").val();
+
+		var html="";
+            	html+='<div style="padding:8px; width:800px; background-color:#f8f8f8;">';
+          	html+='<br/><strong>Cimri Katalog Itemları</strong><br/><br/>';
+		html+='<b>'+$("#merchantItemTitle").val()+"&nbsp;&nbsp;&nbsp;"+$("#mpnValue").val()+"</b><br/><br/>";
+		html+='<table>';
+		for(var i=0;i<items.length;i++){
+			var item=items[i];
+			if(Number(item["score"])>0.99){
+				if(String(item["id"])==id)
+					html+='<tr style="font-weight:bold;">'
+				else
+					html+='<tr>'
+				html+='<td style="width:120px;">'+item["id"]+'</td>';
+				html+='<td style="width:150px;">'+item["brand"]+'</td>';
+				html+='<td>'+item["keywords"]+'</td>';
+				html+='<td><a href="javascript:;" onclick="setitem('+item["id"]+');hidecatalogue();">seç</a></td>';
+			}
+		}
+		html+='</table>';
+		html+="<br/><br/>";
+                html+='<a href="javascript:;" onclick="setitem(null); hidecatalogue();">item bulunamadı</a>';
+		html+=' | ';
+                html+='<a href="javascript:;" onclick="hidecatalogue()">kapat</a>';
+		html+='</div>';
+
+		$("#site").css("display","none");		
+                $.colorbox({html:html,overlayClose:false});
+	}
+
+	function catalogue(){
+		//get args
+		var args={"title":	$("#merchantItemTitle").val(),
+			  "brand":	$("#brand").val(),
+			  "mpn":	$("#mpnValue").val()};
+	
+		//handler
+		var handler={success:	function(data){
+						showcatalogue(data);
+					},
+		    	     error: 	function(err){
+					}
+		};
+
+		$.cimri_cpanel.comm.call("/catalogue/items",args,handler);		
+	}
+
+	function record(){
+		//get args
+		var args={};
+		args['index']=index;
+		for(var i=0;i<spec.length;i++){
+			//get field id
+			var field=getfieldid(spec[i]);
+
+			//get value
+			var val=$("#"+field).val();	
+
+			//set call argument
+			args[spec[i]]=val;
+
+			//update local copy
+			if("meta.refitem" in data[index] == false)
+				data[index]["meta.refitem"]={};
+			setfieldvalue(data[index]["meta.refitem"],spec[i],val);	
+		}
+
+		//handler
+		var handler={success:	function(status){
+						next();
+					},
+		    	     error: 	function(err){
+					}
+		};
+
+		$.cimri_cpanel.comm.call("/matcher/test/{{id}}/update",args,handler);
+	}
+
+
+	function prev(){
+		if(index==0)
+			return;
+		index=index-1;
+
+		show();
+	}	
+
+	function next(){
+		index=index+1;
+		if(index==data.length){
+			window.location="/system/tests";
+			return;
+		}
+
+		show();
+	}
+
+	function show(fromxml){
+		//display parameters
+		var item=data[index]["meta.refitem"];
+		if(fromxml)
+			item=data[index]["meta.xmlitem"];
+		if(item){
+			for(var i=0;i<spec.length;i++){
+				//get field id
+				var field=getfieldid(spec[i]);
+
+				//get field valud
+				var val=getfieldvalue(item,spec[i]);
+				if(val==null)
+					val="";
+	
+				//set value
+				$("#"+field).val(val);
+				if(field=="itemitemId")
+					$("#itemitemId").val(val);
+			}
+
+		}else{
+			for(var i=0;i<spec.length;i++)
+				$("#"+spec[i]).val("");		
+			$("#itemitemId").val("");
+		}	
+
+		//show merchantid, merchantitemid
+		var mid=getfieldvalue(data[index]["meta.xmlitem"],"merchant.merchantId");
+		var iid=getfieldvalue(data[index]["meta.xmlitem"],"merchantItemId");
+		$("#xmlinfo").html(mid+":"+iid);		
+
+		//open url
+		if(!fromxml)
+			$("#site").html('<iframe src="'+data[index]["data"]+'" border="0" width="900" height="800"/>');
+	}
+
+	$(document).ready(function(){
+		next();
+	});
+	
+</script>
+
+
+<p>
+	<h3>Matcher Testi</h3>
+</p>
+
+<p>
+	<h3>{{data.label}}</h3>
+</p>
+
+<div style="float:left; width:200px">
+	<h4>Ürün Bilgileri</h4>
+	<span id="xmlinfo"></span> (<a href="javascript:;" onclick="fromxml()">xml'den al</a>)<br/><br/>
+
+	title:<br/>
+	<input id="merchantItemTitle" type="text" name=""/><br/>
+	mpn:<br/>
+	<input id="mpnValue" type="text" name=""/><br/>
+	marka:<br/>
+	<input id="brand" type="text" name=""/><br/>
+	cimri item (<a href="javascript:;" onclick="catalogue()">ara</a>):<br/>
+	<input id="itemitemId" type="text" name=""/>
+
+	<br/>
+	<a href="javascript:;" onclick="prev()">geri</a> | 
+	<a href="javascript:;" onclick="next()">geç</a> | 
+	<a href="javascript:;" onclick="record()">kayıt et</a>
+</div>
+
+<div style="float:left; width:900px height:700px;" id="site">
+</div>

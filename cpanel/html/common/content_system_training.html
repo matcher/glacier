@@ -1,0 +1,12 @@
+<p>
+	<h3>Sistem Eğitimi</h3>
+</p>
+
+<p>
+<a href="javascript:;" onclick="$.cimri_cpanel.showcontent('content','/training/new')">yeni eğitim yarat</a>
+<pre>
+{% for ml in data %}
+{{ml.created}} {{ml.module}} {{ml.getstatusstring}} {{ml.target.merchant.name}} {{ml.label}} {% if ml.status == "ready" %}<a href="/{% if ml.op == "match" %}matcher{% else %}scraper{% endif %}/training/{{ml.id}}/build">[hazırla]</a> | <a href="javascript:;" onclick="$.cimri_cpanel.showcontent('content','/training/{{ml.id}}/schedule')">[eğit]</a>{% endif %}
+{% endfor %}
+</pre>
+</p>
