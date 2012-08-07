@@ -18,6 +18,7 @@ from string import Template
 from types import ListType
 import json
 import urllib2
+import pprint
 
 from cimri.api.httpapi import HttpAPI
 from cimri.system.config import Config
@@ -358,6 +359,11 @@ class MerchantsAPI(HttpAPI):
 			
 		#get packet
 		packet=json.dumps({"merchantItem":[process(item) for item in items]})
+
+#		f=open("update.txt","w")
+#		f.write("\n".join(["\n".join([item.merchantItemTitle,repr(item.merchantItemTitle),"\n"]) for item in items]))
+#		f.write(packet)
+#		f.close()
 
 		return self.put("merchants/items/sma",packet)
 
