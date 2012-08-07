@@ -1,0 +1,6 @@
+*.pyc
+config.py
+config.ini
+logger.conf
+cpanel.wsgi
+*.sqlite3
