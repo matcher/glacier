@@ -96,7 +96,7 @@ class SerialDoc(object):
 	        """
 
 #		connect(Config.getconfig("API").get("analytics_db"))
-		connect("cimri-matcher-dev")
+		connect("cimri-matcher")
 
 
 	def create(self):
