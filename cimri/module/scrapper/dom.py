@@ -207,7 +207,7 @@ class DOMScrapper(Scrapper,Web):
 
 				#init url access stat for merchant
 				if item["meta.xmlitem"].merchant["merchantId"] not in self.url_access_stats:
-					self.url_access_stats[item["meta.xmlitem"].merchant["merchantId"]]=0
+					self.url_access_stats[item["meta.xmlitem"].merchant["merchantId"]]={"tout":0,"total":0}
 
 				#check options
 				if self.ignore_not_approved and (rec is None or rec.is_approved is False):
@@ -228,9 +228,19 @@ class DOMScrapper(Scrapper,Web):
 					self._progress()
 					work.next()
 					return
-		
+
+				#if too many time outs happened for this merchant's urls, bypass merchant
+				touts=self.url_access_stats[item["meta.xmlitem"].merchant["merchantId"]]["tout"]
+				total=self.url_access_stats[item["meta.xmlitem"].merchant["merchantId"]]["total"]
+				if total>10 and float(touts)/total>0.3:
+					#done with item
+					self._progress()
+					work.next()
+					return		
+
 				#load
 				self._benchmark_start("load")
+				self.logger.info("opening url: %s",url)
 				res=yield self._get_page(url,cache=cache)
 				if res.error is not None:
 					#log error
@@ -245,7 +255,8 @@ class DOMScrapper(Scrapper,Web):
 
 					#record error
 					if res.error.code is None:
-						self.url_access_stats[item["meta.xmlitem"].merchant["merchantId"]]+=1
+						self.url_access_stats[item["meta.xmlitem"].merchant["merchantId"]]["total"]+=1
+						self.url_access_stats[item["meta.xmlitem"].merchant["merchantId"]]["tout"]+=1
 
 				else:	
 					self._benchmark_record("load")
@@ -1769,7 +1780,7 @@ class DOMScrapper(Scrapper,Web):
 				rec.merchantid=int(mid)
 				rec=rec.create()
 
-			rec.errors={"access":self.url_access_stats[mid]}
+			rec.errors={"access":self.url_access_stats[mid]["tout"]}
 	
 			rec.save()
 
