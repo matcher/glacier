@@ -1334,15 +1334,24 @@ class DOMScrapper(Scrapper,Web):
 				buffer=buffer[-radius:]
 
 
+		#get processed spec keywords
+		keywords=self.spec.get_keywords()
+		keywords=dict([ (remove_non_alphanumeric(replace_turkish_chars(keyword)).lower(),True) for keyword in keywords])
+
 		#evaluate targets for probabilities
 		for index in targets:
+			#check if the node text is matches a spec keyword exactly
+			text=pattern.web.plaintext(unicode(node)).strip()
+			text=remove_non_alphanumeric(replace_turkish_chars(text)).lower()
+			iskeyword = text in keywords
+
 			#get fields
 			fields=self.spec.get_fields()
 
 			#initialize probabilities
 			self.targets[index]._match["P"]={}
 			for key in fields:
-				self.targets[index]._match["P"][key]=1.0
+				self.targets[index]._match["P"][key]=1.0 if iskeyword is False else 0
 			
 			#apply all probability distributions
 			for key in self.P:
