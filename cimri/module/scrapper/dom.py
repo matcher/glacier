@@ -32,6 +32,7 @@ from cimri.system.cache import Cache
 from cimri.system.logger import Logger
 from cimri.system.web import Web
 from cimri.system.spec import ProductSpec
+from cimri.api.cimriservice.merchants import MerchantsAPI
 from cimri.api.cimriservice.data.merchantitem import MerchantItem
 from cimri.api.scraper.merchant import MerchantScraperRecord
 from cimri.api.scraper.item import MerchantItemScraperRecord
@@ -82,7 +83,9 @@ class DOMScrapper(Scrapper,Web):
 								  hala gecerli olup olmadigina karar ver, gerekirse egitimi gecersiz
 								  olarak guncelle.
 
-				 "ignore_not_approved"		: eger bir merchant egitimli degilse ya da egitim bilgileri onayli degilse
+ 				 "ignore_non_active"		: eger bir item cimri servis'te matched ve aktif degilse isleme alma	
+
+ 				 "ignore_not_approved"		: eger bir merchant egitimli degilse ya da egitim bilgileri onayli degilse
 								  o merchantin itemlarini scrape islemine alma		
 
 				 "passthrough_not_approved"	: eger bir merchant egitimli degilse ya da egitim bilgileri onayli degilse
@@ -129,7 +132,10 @@ class DOMScrapper(Scrapper,Web):
 		self.P=None			#probabilities to use	
 		self.S=None			#statistics used for machine learning
 
+		#do not log url error for scrapper
+		self._log_url_faults=False
 
+	@defer.inlineCallbacks
 	def _task_scrap(self):
                 """
 		"scrap" islemini gerceklestirir
@@ -148,6 +154,7 @@ class DOMScrapper(Scrapper,Web):
 		self.train=("train" in self.task.meta and self.task.meta["train"] is True)  
 
 		#get other task options
+		self.ignore_none_active=("ignore_none_active" in self.task.meta and self.task.meta["ignore_none_active"] is True)  
 		self.ignore_not_approved=("ignore_not_approved" in self.task.meta and self.task.meta["ignore_not_approved"] is True)  
 		self.passthrough_not_approved=("passthrough_not_approved" in self.task.meta and self.task.meta["passthrough_not_approved"] is True)  
 
@@ -190,12 +197,28 @@ class DOMScrapper(Scrapper,Web):
 			#mark as completed
 			self._complete()
 
+		#check if a merchant item is active and matched in cimri catagloru
+		def isactive(item):
+			#if the item is not in cimri catalogue, it's not matched yet
+			if item.merchantItemId not in self._merchant_items[item.merchant["merchantId"]]:
+				return False
+
+			#check if the item is active 
+			return self._merchant_items[item.merchant["merchantId"]][item.merchantItemId].is_matched()
+
 		#scrap
 		@defer.inlineCallbacks
 		def scrapitem(item,work):
 			try:
 				#get item url
 				url=item["data"]	
+
+				#if item is not active, do not process it
+				if self.ignore_none_active is True and isactive(item["meta.xmlitem"]) is False:
+					#done with item
+					self._progress()
+					work.next()
+					return
 
 				#get merchant record	
 				MerchantScraperRecord.connectdb()
@@ -204,10 +227,6 @@ class DOMScrapper(Scrapper,Web):
 					rec=MerchantScraperRecord.get(merchantid=int(item["meta.xmlitem"].merchant["merchantId"]))
 				except Exception as e:
 					pass
-
-				#init url access stat for merchant
-				if item["meta.xmlitem"].merchant["merchantId"] not in self.url_access_stats:
-					self.url_access_stats[item["meta.xmlitem"].merchant["merchantId"]]={"tout":0,"total":0}
 
 				#check options
 				if self.ignore_not_approved and (rec is None or rec.is_approved is False):
@@ -229,6 +248,10 @@ class DOMScrapper(Scrapper,Web):
 					work.next()
 					return
 
+				#init url access stat for merchant
+				if item["meta.xmlitem"].merchant["merchantId"] not in self.url_access_stats:
+					self.url_access_stats[item["meta.xmlitem"].merchant["merchantId"]]={"tout":0,"total":0}
+
 				#if too many time outs happened for this merchant's urls, bypass merchant
 				touts=self.url_access_stats[item["meta.xmlitem"].merchant["merchantId"]]["tout"]
 				total=self.url_access_stats[item["meta.xmlitem"].merchant["merchantId"]]["total"]
@@ -238,14 +261,17 @@ class DOMScrapper(Scrapper,Web):
 					work.next()
 					return		
 
+				#update stats for merchant
+				self.url_access_stats[item["meta.xmlitem"].merchant["merchantId"]]["total"]+=1
+
 				#load
 				self._benchmark_start("load")
 				self.logger.info("opening url: %s",url)
 				res=yield self._get_page(url,cache=cache)
 				if res.error is not None:
 					#log error
-	                                msg=Template("error opening url: $url").substitute(url=url)
-        	                        self._log_error(msg)
+#	                                msg=Template("error opening url: $url").substitute(url=url)
+#        	                        self._log_error(msg)
 				
 					#update scraper record
 					if res.error.code is None:
@@ -255,7 +281,6 @@ class DOMScrapper(Scrapper,Web):
 
 					#record error
 					if res.error.code is None:
-						self.url_access_stats[item["meta.xmlitem"].merchant["merchantId"]]["total"]+=1
 						self.url_access_stats[item["meta.xmlitem"].merchant["merchantId"]]["tout"]+=1
 
 				else:	
@@ -363,12 +388,45 @@ class DOMScrapper(Scrapper,Web):
 
 		#initialize progress tracker
 		self._progress(len(self.task.data))
-			
+
 		#distribute tesk
 		d=Distributor(scrapitem,oncomplete=oncomplete,workers=workers)
 		d.run()
+
+		#clear merchant item cache
+		self._merchant_items={}		#items by merchant (from cimri)
+	
+		#get all existing merchant items from the cimri service
+		if self.ignore_none_active is True:
+			def get_merchant_items(id):	
+				def get_merchant_items_async(id):		
+					api=MerchantsAPI()
+					res=api.get_merchant_items(id)
+					if res is None:
+						self._log_error("error getting cimri service merchant items for merchant "+str(id))
+					return res
+
+				return deferToThread(get_merchant_items_async,id)
+
+			#get all merchants in this task
+			for item in self.task.data:
+				id=item["meta.xmlitem"].merchant["merchantId"]
+				if id not in self._merchant_items:
+					self._merchant_items[id]={}
+
+			#for each merchant in this task, get all merchant items from the cimri service
+			for id in self._merchant_items:
+				#get cimri merchant items
+				items=yield get_merchant_items(id)
+				items=items if items is not None else []	#cimri service returns a 204 when the merchant has no items in cimriservice
+
+				#store items in a format that can be looked up fast
+				for it in items:
+					self._merchant_items[id][it.merchantItemId]=it
+
+		#add data and complete when all data is processed
 		d.adddata(self.task.data)
-		d.complete()	#complete when all data is processed
+		d.complete()	
 
 		#log performance benchmark	
 		self._log_benchmark()

@@ -179,6 +179,10 @@ class ControllerAPI(AppMgr):
 					  "type":	"bool",
 					  "default":	False
 					 },
+					 {"key":	"ignore_none_active",
+					  "type":	"bool",
+					  "default":	False
+					 },
 					 {"key":	"ignore_not_approved",
 					  "type":	"bool",
 					  "default":	False

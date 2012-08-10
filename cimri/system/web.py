@@ -140,6 +140,9 @@ class Web(object):
 		#get configuration
 		self.config=Config.getconfig("WEB")
 
+		#log url errors by default
+		self._log_url_faults=False
+
 
 	def ping(self,url):
 		"""
@@ -245,48 +248,48 @@ class Web(object):
 				
                 except HTTP400BadRequest as e:
 			report.error=WebError("exception ocurred opening url. bad request",400,url)
-                        self.logger.error(str(report.error))
-                        self.logger.error(str(e))
+                        self.log(str(report.error))
+                        self.log(str(e))
 
                 except HTTP401Authentication as e:
 			report.error=WebError("exception ocurred opening url. url requires authentication",401,url)
-                        self.logger.error(str(report.error))
-                        self.logger.error(str(e))
+                        self.log(str(report.error))
+                        self.log(str(e))
 
                 except HTTP403Forbidden as e:
 			report.error=WebError("exception ocurred opening url. url not accessible",403,url)
-                        self.logger.error(str(report.error))
-                        self.logger.error(str(e))
+                        self.log(str(report.error))
+                        self.log(str(e))
 
                 except HTTP404NotFound as e:
 			report.error=WebError("exception ocurred opening url. not found",404,url)
-                        self.logger.error(str(report.error))
-                        self.logger.error(str(e))
+                        self.log(str(report.error))
+                        self.log(str(e))
 
                 except HTTPError as e:
 			report.error=WebError("exception ocurred opening url",None,url)
-                        self.logger.error(str(report.error))
-                        self.logger.error(str(e))
+                        self.log(str(report.error))
+                        self.log(str(e))
 
                 except URLError as e:
 			report.error=WebError("exception ocurred opening url. url contains errors",None,url)
-                        self.logger.error(str(report.error))
-                        self.logger.error(str(e))
+                        self.log(str(report.error))
+                        self.log(str(e))
 
                 except URLTimeout as e:
 			report.error=WebError("exception ocurred opening url. url load timed out",None,url)
-                        self.logger.error(str(report.error))
-                        self.logger.error(str(e))
+                        self.log(str(report.error))
+                        self.log(str(e))
 
 		except IOError as e:
 			report.error=FileError("exception ocurred writing to file",file)
-                        self.logger.error(str(report.error))
-                        self.logger.error(str(e))
+                        self.log(str(report.error))
+                        self.log(str(e))
 
 		except Exception as e:
 			report.error=WebError("exception ocurred",None,url)
-                        self.logger.error(str(report.error))
-                        self.logger.error(str(e))
+                        self.log(str(report.error))
+                        self.log(str(e))
 		
 		finally:
 			if f!=None:
@@ -300,4 +303,7 @@ class Web(object):
 		return report
 
 
+	def log(self,msg):
+		if self._log_url_faults is True:
+			self.logger.error(msg)
 
