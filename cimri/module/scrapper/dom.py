@@ -307,6 +307,14 @@ class DOMScrapper(Scrapper,Web):
 					self._init_targets()
 					self._benchmark_record("targets")
 
+					#parse error?
+					if len(self.targets)==0:
+	 				      	self._log_scraped_item(item["meta.xmlitem"],None,"parse error")
+						#done with item
+						self._progress()
+						work.next()
+						return		
+
 					#compile proximity graph
 					#self._compile_proximity_graph()
 
@@ -508,22 +516,28 @@ class DOMScrapper(Scrapper,Web):
 		#nodes that will be targeted for matching
 		self.targets=[]		
 
-		#collect targets
-		def add_target(node):
-			if node.type=="text":	
-				text=pattern.web.plaintext(unicode(node)).strip()
-				text=remove_non_alphanumeric(replace_turkish_chars(text))
-				if text!="":	
-					#add attribute to store match data
-					node._match={}			
+		#parse
+		try:
+			#collect targets
+			def add_target(node):
+				if node.type=="text":	
+					text=pattern.web.plaintext(unicode(node)).strip()
+					text=remove_non_alphanumeric(replace_turkish_chars(text))
+					if text!="":	
+						#add attribute to store match data
+						node._match={}			
 
-					#add to target list		
-					self.targets.append(node)
+						#add to target list		
+						self.targets.append(node)
 
-			return None
+				return None
 
-		#traverse the dom
-		self.dom.body.traverse(add_target)
+			#traverse the dom
+			self.dom.body.traverse(add_target)
+
+		except Exception as e:
+			#parse error
+			self.targets=[]		
 
 
 	def _compile_proximity_graph(self):
@@ -730,6 +744,7 @@ class DOMScrapper(Scrapper,Web):
 							break
 					match[field]=val
 
+
 		return match
 
 
@@ -773,7 +788,7 @@ class DOMScrapper(Scrapper,Web):
 		#add meta hints to transformations
 		for hint in self.hints:
 			transformations[ remove_non_alphanumeric(replace_turkish_chars(hint['value'])).lower() ]={"type":"hint","value":hint['field']}
-		
+
 		#match each target node against spec label hints, spec field value hints, spec type hints
 		#and meta hints (xml item info,...)
 		for node in self.targets:
@@ -795,15 +810,16 @@ class DOMScrapper(Scrapper,Web):
 				transformation=match[0]
 				score=match[1]		
 
-				#lookup keyword based on the transformation
-				keyword=transformations[transformation]			
-
 				#record match
 				node._match["score"]=score
 				node._match["inline"]=not match[2]
 
-				#get the field matched
-				field=self.spec.get_field_by_keyword(keyword['value'])
+				#get the field matched based on the transformation
+				keyword=transformations[transformation]			
+				if keyword["type"]=="spec":
+					field=self.spec.get_field_by_keyword(keyword['value'])
+				else:
+					field=keyword['value']
 				fieldef=self.spec.get_field(field)
 
 				#if this was an inline match that matched a numeric field but there are fewer than 3 numeric chacters, void the match
@@ -830,6 +846,7 @@ class DOMScrapper(Scrapper,Web):
 					else:
 						node._match["hint"]=keyword['value']
 						node._match["label"]=None
+
 
 				#record pattern
 				self.pattern.append(node)
@@ -1473,7 +1490,7 @@ class DOMScrapper(Scrapper,Web):
 		for filter in filters:
 			search=search.replace(" "+remove_non_alphanumeric(replace_turkish_chars(filter))+" "," ")
 		search=search.strip()	
-		
+
 		#try exact match against the corpus
 		for word in corpus:		
 			#check match
