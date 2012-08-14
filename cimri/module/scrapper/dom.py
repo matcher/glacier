@@ -386,7 +386,7 @@ class DOMScrapper(Scrapper,Web):
 	
                         except Exception as e:
                                 data=Template("url: $url").substitute(url=url)
-                                self._log_exception(e,data=data)
+                                self._log_exception(e,data=repr(data))
 
 			#update progress		
 			self._progress()
