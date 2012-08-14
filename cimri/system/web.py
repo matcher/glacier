@@ -80,6 +80,7 @@ class FileError():
 	        """
 
 		self.msg=msg
+		self.code=None
 		self.file=file
 
 
